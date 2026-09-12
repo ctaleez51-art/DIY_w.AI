@@ -1,8 +1,13 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
   display: grid;
   place-items: center;
+  grid-template-columns: minmax(0, 1fr);
   font-family: "Malgun Gothic", system-ui, sans-serif;
   line-height: 1.7;
   background: #fafaf8;
@@ -10,7 +15,8 @@ body {
 }
 
 main {
-  width: 18rem;
+  width: 100%;
+  max-width: 30rem;
   padding: 2rem;
   text-align: center;
 }
@@ -63,4 +69,147 @@ button:disabled {
   font-size: .9rem;
   color: #666;
   min-height: 1.5rem;
+}
+
+/* 로그인 후 화면 — 칸이 많아서 왼쪽 맞춤으로 둔다 */
+h2 {
+  font-size: 1.1rem;
+  margin: 2rem 0 .7rem;
+  padding-bottom: .3rem;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+h3 {
+  font-size: 1rem;
+  margin: 1.5rem 0 .5rem;
+  text-align: left;
+}
+
+.칸모음 {
+  display: grid;
+  gap: .6rem;
+  text-align: left;
+  font-size: .9rem;
+}
+
+.칸모음 label {
+  display: grid;
+  gap: .2rem;
+}
+
+.칸모음 label.한줄 {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+select {
+  padding: .6rem .7rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #fff;
+}
+
+fieldset {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: .7rem;
+  display: grid;
+  gap: .5rem;
+}
+
+legend {
+  font-size: .9rem;
+  padding: 0 .3rem;
+}
+
+.업종줄 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .4rem;
+  margin-bottom: .4rem;
+}
+
+#addIndustry {
+  background: #fff;
+  color: #333;
+  padding: .4rem;
+  font-size: .85rem;
+}
+
+.사업장줄 {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  text-align: left;
+  padding: .5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+#bizList {
+  text-align: left;
+  font-size: .9rem;
+}
+
+.폼버튼 {
+  display: grid;
+  gap: .4rem;
+}
+
+#cancelEdit {
+  background: #fff;
+  color: #333;
+}
+
+.사업장줄 label {
+  flex: 1;
+}
+
+.작은버튼 {
+  padding: .3rem .6rem;
+  font-size: .8rem;
+  background: #fff;
+  color: #333;
+  border-color: #bbb;
+}
+
+/* 긴 보기(예: "추가신고(인정상여)")가 있는 select 때문에
+   칸이 화면 밖으로 밀리는 것을 막는다 */
+.칸모음,
+.폼버튼 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.업종줄 {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+input,
+select,
+button {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 안내 문구는 페이지가 길어져도 늘 보이도록 화면 아래에 띄운다 */
+#msg {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: .5rem .9rem;
+  max-width: 90vw;
+  border-radius: 6px;
+  background: #333;
+  color: #fff;
+  min-height: 0;
+  pointer-events: none;   /* 문구가 떠 있어도 아래 칸을 누를 수 있게 한다 */
+}
+
+#msg:empty {
+  display: none;
 }
