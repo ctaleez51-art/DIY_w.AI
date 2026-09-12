@@ -36,7 +36,6 @@ const 오류문구 = {
   "Password should be at least 6 characters.": "비밀번호는 6자 이상이어야 합니다.",
   "Unable to validate email address: invalid format": "이메일 주소를 확인할 수 없습니다.",
   "missing email or phone": "이메일 주소를 입력해야 합니다.",
-  "User already registered": "이미 가입한 이메일 주소입니다.",
 };
 
 function 한글로(error) {
