@@ -270,3 +270,17 @@ button {
 .장부표 td.숫자 {
   text-align: right;
 }
+
+/* 기준 연도가 아닌 줄 */
+.장부표 tr.다른연도 td {
+  background: #fdeeee;
+}
+
+.장부표 td:first-child,
+.장부표 th:first-child {
+  text-align: center;
+}
+
+#removeBtn {
+  margin-top: .8rem;
+}

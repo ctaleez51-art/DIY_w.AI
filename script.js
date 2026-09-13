@@ -247,6 +247,7 @@ const setup        = document.getElementById("setup");
 const ledgerScreen = document.getElementById("ledgerScreen");
 const ledgerScreenTitle = document.getElementById("ledgerScreenTitle");
 const backBtn      = document.getElementById("backBtn");
+const removeBtn    = document.getElementById("removeBtn");
 
 // 지금 고른 사업장. 다음 단계(장부 저장)에서 쓴다.
 let 고른사업장 = localStorage.getItem("고른사업장") ?? "";
@@ -648,6 +649,9 @@ function 한줄옮기기(줄, 자리, 사업장) {
 // 간편장부 표 그리기 — 서식의 항목 이름을 그대로 쓴다
 // ============================================================
 
+// 기준 연도. 이 해가 아닌 줄은 표시해두고 체크를 미리 켜둔다 (RULES.md)
+const 기준연도 = "2026";
+
 const 본문열 = [
   "일자", "계정과목", "거래내용", "거래처",
   "수입금액", "수입부가세",
@@ -673,6 +677,7 @@ window.addEventListener("resize", 창폭재기);
 
 function 장부그리기() {
   ledgerTable.replaceChildren();
+  removeBtn.hidden = 장부.length === 0;
   if (장부.length === 0) return;
 
   const 표 = document.createElement("table");
@@ -683,6 +688,7 @@ function 장부그리기() {
 
   const 윗줄 = document.createElement("tr");
   윗줄.append(
+    칸만들기("th", "", { rowspan: 2 }),
     칸만들기("th", "①일자", { rowspan: 2 }),
     칸만들기("th", "②계정과목", { rowspan: 2 }),
     칸만들기("th", "③거래내용", { rowspan: 2 }),
@@ -701,8 +707,21 @@ function 장부그리기() {
   머리.append(윗줄, 아랫줄);
 
   const 몸 = document.createElement("tbody");
-  for (const 한줄 of 장부) {
+  장부.forEach((한줄, 번호) => {
     const 줄 = document.createElement("tr");
+
+    // 기준 연도가 아닌 줄은 눈에 띄게 하고 체크를 미리 켜둔다
+    const 다른연도 = 한줄.일자.slice(0, 4) !== 기준연도;
+    if (다른연도) 줄.className = "다른연도";
+
+    const 고름칸 = document.createElement("td");
+    const 체크 = document.createElement("input");
+    체크.type = "checkbox";
+    체크.checked = 다른연도;
+    체크.dataset.번호 = 번호;
+    고름칸.appendChild(체크);
+    줄.appendChild(고름칸);
+
     for (const 열 of 본문열) {
       const 값 = 한줄[열];
       const 칸 = 칸만들기("td", typeof 값 === "number" ? 값.toLocaleString() : 값);
@@ -710,7 +729,7 @@ function 장부그리기() {
       줄.appendChild(칸);
     }
     몸.appendChild(줄);
-  }
+  });
 
   표.append(머리, 몸);
   ledgerTable.appendChild(표);
@@ -718,6 +737,19 @@ function 장부그리기() {
   // 표가 붙으면 페이지가 길어져 세로 스크롤바가 생긴다. 그만큼 창 폭이 줄어드니 다시 잰다.
   창폭재기();
 }
+
+// 체크한 줄을 장부에서 뺀다
+removeBtn.addEventListener("click", () => {
+  const 뺄것 = new Set(
+    [...ledgerTable.querySelectorAll("input[type=checkbox]:checked")]
+      .map((체크) => Number(체크.dataset.번호))
+  );
+  if (뺄것.size === 0) return;
+
+  장부 = 장부.filter((_, 번호) => !뺄것.has(번호));
+  장부그리기();
+  say(`${뺄것.size}건을 뺐습니다.`);
+});
 
 
 // ============================================================
