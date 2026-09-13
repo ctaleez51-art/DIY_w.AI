@@ -40,6 +40,8 @@ function draw(session) {
     개인정보비우기();
     편집끝내기();
     bizList.replaceChildren();
+    사업장들 = [];
+    장부칸그리기();
   }
 }
 
@@ -234,9 +236,14 @@ const addIndustry  = document.getElementById("addIndustry");
 const bizList      = document.getElementById("bizList");
 const saveBiz      = document.getElementById("saveBiz");
 const cancelEdit   = document.getElementById("cancelEdit");
+const ledger       = document.getElementById("ledger");
+const ledgerTitle  = document.getElementById("ledgerTitle");
 
 // 지금 고른 사업장. 다음 단계(장부 저장)에서 쓴다.
 let 고른사업장 = localStorage.getItem("고른사업장") ?? "";
+
+// 방금 불러온 사업장 목록. 고른 것의 상호를 제목에 쓰려고 들고 있는다.
+let 사업장들 = [];
 
 // 수정 중인 사업장. 비어 있으면 새로 등록하는 것이다.
 let 수정중 = "";
@@ -399,17 +406,18 @@ async function 사업장목록() {
     return;
   }
 
+  사업장들 = data;
   bizList.replaceChildren();
 
   if (data.length === 0) {
     bizList.textContent = "등록한 사업장이 없습니다.";
+    장부칸그리기();
     return;
   }
 
   // 고른 것이 목록에 없으면(다른 계정으로 바뀐 경우) 첫 줄을 고른다
-  if (!data.some((사업장) => 사업장.id === 고른사업장)) {
-    고르기(data[0].id);
-  }
+  const 고른것있음 = data.some((사업장) => 사업장.id === 고른사업장);
+  고르기(고른것있음 ? 고른사업장 : data[0].id);
 
   for (const 사업장 of data) {
     const 줄 = document.createElement("div");
@@ -455,6 +463,20 @@ async function 사업장목록() {
 function 고르기(id) {
   고른사업장 = id;
   localStorage.setItem("고른사업장", id);
+  장부칸그리기();
+}
+
+
+// ============================================================
+// 간편장부 — 고른 사업장의 파일을 받는 자리
+// ============================================================
+
+// 제목에 고른 사업장의 상호와 등록번호를 적는다.
+// 고른 사업장이 없으면 올릴 자리도 없으므로 칸째로 감춘다.
+function 장부칸그리기() {
+  const 사업장 = 사업장들.find((하나) => 하나.id === 고른사업장);
+  ledger.hidden = !사업장;
+  ledgerTitle.textContent = 사업장 ? `간편장부 — ${사업장.name} (${사업장.biz_no})` : "";
 }
 
 
