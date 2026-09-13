@@ -30,7 +30,10 @@ function draw(session) {
 
   if (로그인됨) {
     // 업태·종목 칸이 비어 있으면 한 줄 만들어 둔다
-    if (industryRows.children.length === 0) industryRows.appendChild(업종줄());
+    if (industryRows.children.length === 0) {
+      industryRows.appendChild(업종줄());
+      첫줄만필수();
+    }
     개인정보불러오기();
     사업장목록();
   } else {
@@ -211,7 +214,16 @@ const 칸 = {
   opened_on:  document.getElementById("openedOn"),
   address:    document.getElementById("address"),
   co_owners:  document.getElementById("coOwners"),
-  unit_tax:   document.getElementById("unitTax"),
+};
+
+// 사업자 단위 과세 — 예/아니오 중 하나를 반드시 고른다
+const 단위과세단추 = [...document.querySelectorAll('input[name="unitTax"]')];
+const 단위과세읽기 = () =>
+  단위과세단추.find((단추) => 단추.checked)?.value === "예";
+const 단위과세쓰기 = (값) => {
+  for (const 단추 of 단위과세단추) {
+    단추.checked = 값 === null ? false : 단추.value === (값 ? "예" : "아니오");
+  }
 };
 
 // 업태·종목 한 줄을 만든다
@@ -235,8 +247,16 @@ function 업종줄(값 = { 업태: "", 종목: "" }) {
   return 줄;
 }
 
+// 업태·종목은 첫 줄만 반드시 채운다. 줄 추가해놓고 비워둔 것은 저장할 때 버린다.
+function 첫줄만필수() {
+  industryRows.querySelectorAll(".업종줄").forEach((줄, 번호) => {
+    for (const 칸 of 줄.children) 칸.required = 번호 === 0;
+  });
+}
+
 addIndustry.addEventListener("click", () => {
   industryRows.appendChild(업종줄());
+  첫줄만필수();
 });
 
 // 화면의 업태·종목 줄을 모아서 배열로 만든다. 둘 다 빈 줄은 버린다.
@@ -259,8 +279,8 @@ function 폼읽기() {
     opened_on:  칸.opened_on.value || null,
     address:    칸.address.value.trim() || null,
     industries: 업종모으기(),
-    co_owners:  칸.co_owners.value.trim() || null,
-    unit_tax:   칸.unit_tax.checked,
+    co_owners:  칸.co_owners.value.trim(),
+    unit_tax:   단위과세읽기(),
   };
 }
 
@@ -287,7 +307,9 @@ bizForm.addEventListener("submit", async (e) => {
 function 편집끝내기() {
   수정중 = "";
   bizForm.reset();
+  단위과세쓰기(null);
   industryRows.replaceChildren(업종줄());
+  첫줄만필수();
   saveBiz.textContent = "등록";
   cancelEdit.hidden = true;
 }
@@ -308,10 +330,11 @@ function 수정하기(사업장) {
   칸.opened_on.value  = 사업장.opened_on ?? "";
   칸.address.value    = 사업장.address ?? "";
   칸.co_owners.value  = 사업장.co_owners ?? "";
-  칸.unit_tax.checked = Boolean(사업장.unit_tax);
+  단위과세쓰기(Boolean(사업장.unit_tax));
 
   const 업종들 = 사업장.industries?.length ? 사업장.industries : [{ 업태: "", 종목: "" }];
   industryRows.replaceChildren(...업종들.map(업종줄));
+  첫줄만필수();
 
   saveBiz.textContent = "수정 저장";
   cancelEdit.hidden = false;

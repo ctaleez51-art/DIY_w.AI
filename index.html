@@ -76,7 +76,7 @@
 
     <form id="bizForm" class="칸모음">
       <label>과세유형
-        <select id="taxType">
+        <select id="taxType" required>
           <option value=""></option>
           <option>일반과세자</option>
           <option>간이과세자</option>
@@ -85,9 +85,9 @@
       </label>
       <label>등록번호 <input id="bizNo" type="text" required></label>
       <label>상호 <input id="bizName" type="text" required></label>
-      <label>성명 <input id="ownerName" type="text"></label>
-      <label>개업 연월일 <input id="openedOn" type="date"></label>
-      <label>사업장 소재지 <input id="address" type="text"></label>
+      <label>성명 <input id="ownerName" type="text" required></label>
+      <label>개업 연월일 <input id="openedOn" type="date" required></label>
+      <label>사업장 소재지 <input id="address" type="text" required></label>
 
       <fieldset>
         <legend>사업의 종류</legend>
@@ -95,11 +95,12 @@
         <button id="addIndustry" type="button">줄 추가</button>
       </fieldset>
 
-      <label>공동사업자 <input id="coOwners" type="text"></label>
-      <label class="한줄">
-        <input id="unitTax" type="checkbox">
-        사업자 단위 과세 적용사업자
-      </label>
+      <label>공동사업자 <input id="coOwners" type="text" required></label>
+      <fieldset>
+        <legend>사업자 단위 과세 적용사업자</legend>
+        <label class="한줄"><input type="radio" name="unitTax" value="예" required> 예</label>
+        <label class="한줄"><input type="radio" name="unitTax" value="아니오"> 아니오</label>
+      </fieldset>
 
       <div class="폼버튼">
         <button id="saveBiz" type="submit">등록</button>
