@@ -241,16 +241,16 @@ const ledger       = document.getElementById("ledger");
 const ledgerTitle  = document.getElementById("ledgerTitle");
 const fileInput    = document.getElementById("fileInput");
 const uploadBtn    = document.getElementById("uploadBtn");
-const fileName     = document.getElementById("fileName");
+const viewLedgerBtn = document.getElementById("viewLedgerBtn");
 const ledgerTable  = document.getElementById("ledgerTable");
 const setup        = document.getElementById("setup");
 const ledgerScreen = document.getElementById("ledgerScreen");
 const ledgerScreenTitle = document.getElementById("ledgerScreenTitle");
 const backBtn      = document.getElementById("backBtn");
-const removeBtn    = document.getElementById("removeBtn");
 const confirmRemove = document.getElementById("confirmRemove");
 const confirmYes   = document.getElementById("confirmYes");
 const confirmNo    = document.getElementById("confirmNo");
+const deleteBtn    = document.getElementById("deleteBtn");
 const saveLedgerBtn = document.getElementById("saveLedgerBtn");
 
 // 지금 고른 사업장. 다음 단계(장부 저장)에서 쓴다.
@@ -270,7 +270,6 @@ const 칸 = {
   owner_name: document.getElementById("ownerName"),
   opened_on:  document.getElementById("openedOn"),
   address:    document.getElementById("address"),
-  co_owners:  document.getElementById("coOwners"),
 };
 
 // 사업자 단위 과세 — 예/아니오 중 하나를 반드시 고른다
@@ -280,6 +279,17 @@ const 단위과세읽기 = () =>
 const 단위과세쓰기 = (값) => {
   for (const 단추 of 단위과세단추) {
     단추.checked = 값 === null ? false : 단추.value === (값 ? "예" : "아니오");
+  }
+};
+
+// 공동사업자 — 예/아니오 중 하나를 반드시 고른다.
+// DB 칸(co_owners)은 글자라서 고른 값을 그대로 넣는다.
+const 공동사업자단추 = [...document.querySelectorAll('input[name="coOwners"]')];
+const 공동사업자읽기 = () =>
+  공동사업자단추.find((단추) => 단추.checked)?.value ?? "";
+const 공동사업자쓰기 = (값) => {
+  for (const 단추 of 공동사업자단추) {
+    단추.checked = 단추.value === 값;
   }
 };
 
@@ -336,7 +346,7 @@ function 폼읽기() {
     opened_on:  칸.opened_on.value || null,
     address:    칸.address.value.trim() || null,
     industries: 업종모으기(),
-    co_owners:  칸.co_owners.value.trim(),
+    co_owners:  공동사업자읽기(),
     unit_tax:   단위과세읽기(),
   };
 }
@@ -364,6 +374,7 @@ bizForm.addEventListener("submit", async (e) => {
 function 편집끝내기() {
   수정중 = "";
   bizForm.reset();
+  공동사업자쓰기(null);
   단위과세쓰기(null);
   industryRows.replaceChildren(업종줄());
   첫줄만필수();
@@ -386,7 +397,7 @@ function 수정하기(사업장) {
   칸.owner_name.value = 사업장.owner_name ?? "";
   칸.opened_on.value  = 사업장.opened_on ?? "";
   칸.address.value    = 사업장.address ?? "";
-  칸.co_owners.value  = 사업장.co_owners ?? "";
+  공동사업자쓰기(사업장.co_owners ?? "");
   단위과세쓰기(Boolean(사업장.unit_tax));
 
   const 업종들 = 사업장.industries?.length ? 사업장.industries : [{ 업태: "", 종목: "" }];
@@ -497,13 +508,13 @@ function 장부칸그리기() {
 // 우리 버튼을 누르면 감춰둔 파일 칸을 대신 연다
 uploadBtn.addEventListener("click", () => fileInput.click());
 
-// 고른 파일의 이름을 버튼 옆에 보여준다. 여러 개면 줄줄이 적는다.
+// 파일을 올리면 이미 읽어둔 장부에 이어 붙인다.
+// 예전 내용을 지우지 않는다 — 여러 번 나눠 올릴 수 있어야 한다.
 fileInput.addEventListener("change", async () => {
-  fileName.textContent = [...fileInput.files].map((파일) => 파일.name).join(", ");
   if (fileInput.files.length === 0) return;
 
   const 사업장 = 사업장들.find((하나) => 하나.id === 고른사업장);
-  장부 = [];
+  const 읽기전 = 장부.length;
 
   for (const 파일 of fileInput.files) {
     try {
@@ -513,9 +524,16 @@ fileInput.addEventListener("change", async () => {
     }
   }
 
+  say(`${장부.length - 읽기전}건을 더 읽었습니다. 모두 ${장부.length}건입니다.`);
+
   날짜순으로();
   장부그리기();
   if (장부.length > 0) 장부화면으로();
+
+  // 고른 파일을 비운다. 비우지 않으면 브라우저가 '바뀐 것 없음' 으로 보고
+  // 같은 파일을 다시 골랐을 때 아무 일도 일어나지 않는다.
+  // 같은 파일이든 다른 파일이든 일단 올라가야 한다 (중복은 나중에 따로 뺀다)
+  fileInput.value = "";
 });
 
 // 장부는 날짜 순서다. 파일을 여러 개 올려도 섞어서 오래된 것부터 놓는다.
@@ -534,13 +552,15 @@ function 장부화면으로() {
   ledgerScreenTitle.textContent = ledgerTitle.textContent;
   setup.hidden = true;
   ledgerScreen.hidden = false;
+  // 표가 넓어서 장부 화면에서만 본문 폭 제한(30rem)을 푼다 (styles.css 의 body.장부중)
+  document.body.classList.add("장부중");
   window.scrollTo(0, 0);
-  창폭재기();
 }
 
 function 등록화면으로() {
   ledgerScreen.hidden = true;
   setup.hidden = false;
+  document.body.classList.remove("장부중");
   window.scrollTo(0, 0);
 }
 
@@ -548,7 +568,6 @@ backBtn.addEventListener("click", 등록화면으로);
 
 function 고른파일비우기() {
   fileInput.value = "";
-  fileName.textContent = "";
   장부 = [];
   ledgerTable.replaceChildren();
   등록화면으로();
@@ -731,19 +750,9 @@ function 칸만들기(이름, 글, 속성 = {}) {
   return 칸;
 }
 
-// 세로 스크롤바를 뺀 실제 창 폭. styles.css 의 --창폭 이 이 값을 쓴다.
-function 창폭재기() {
-  const 폭 = document.documentElement.clientWidth;
-  document.documentElement.style.setProperty("--창폭", `${폭}px`);
-}
-창폭재기();
-window.addEventListener("resize", 창폭재기);
-
 function 장부그리기() {
   ledgerTable.replaceChildren();
   confirmRemove.hidden = true;
-  removeBtn.hidden = 장부.length === 0;
-  saveLedgerBtn.hidden = 장부.length === 0;
   if (장부.length === 0) return;
 
   const 표 = document.createElement("table");
@@ -754,7 +763,7 @@ function 장부그리기() {
 
   const 윗줄 = document.createElement("tr");
   윗줄.append(
-    칸만들기("th", "", { rowspan: 2 }),
+    칸만들기("th", "선택", { rowspan: 2 }),
     칸만들기("th", "①일자", { rowspan: 2 }),
     칸만들기("th", "②계정과목", { rowspan: 2 }),
     칸만들기("th", "③거래내용", { rowspan: 2 }),
@@ -776,14 +785,13 @@ function 장부그리기() {
   장부.forEach((한줄, 번호) => {
     const 줄 = document.createElement("tr");
 
-    // 기준 연도가 아닌 줄은 눈에 띄게 하고 체크를 미리 켜둔다
+    // 기준 연도가 아닌 줄은 색깔로만 알린다. 체크는 사용자가 직접 켠다
     const 다른연도 = 한줄.일자.slice(0, 4) !== 기준연도;
     if (다른연도) 줄.className = "다른연도";
 
     const 고름칸 = document.createElement("td");
     const 체크 = document.createElement("input");
     체크.type = "checkbox";
-    체크.checked = 다른연도;
     체크.dataset.번호 = 번호;
     고름칸.appendChild(체크);
     줄.appendChild(고름칸);
@@ -799,9 +807,6 @@ function 장부그리기() {
 
   표.append(머리, 몸);
   ledgerTable.appendChild(표);
-
-  // 표가 붙으면 페이지가 길어져 세로 스크롤바가 생긴다. 그만큼 창 폭이 줄어드니 다시 잰다.
-  창폭재기();
 }
 
 // 체크한 줄을 장부에서 뺀다. 한 번 물어보고 확인을 받아야 뺀다.
@@ -815,14 +820,12 @@ function 체크한번호() {
 
 function 묻기끝내기() {
   confirmRemove.hidden = true;
-  removeBtn.hidden = 장부.length === 0;
-  saveLedgerBtn.hidden = 장부.length === 0;
 }
 
-removeBtn.addEventListener("click", () => {
+// 체크로 고른 뒤 '삭제' 를 눌러야 묻는 줄이 뜬다.
+// 고른 것이 없으면 아무 일도 하지 않는다.
+deleteBtn.addEventListener("click", () => {
   if (체크한번호().size === 0) return;
-  removeBtn.hidden = true;
-  saveLedgerBtn.hidden = true;
   confirmRemove.hidden = false;
 });
 
@@ -871,6 +874,60 @@ function 저장할줄(한줄, 사업장) {
     note:           한줄.비고 || null,
   };
 }
+
+// DB 에서 꺼낸 줄을 화면이 쓰는 이름으로 되돌린다 (저장할줄 의 반대)
+function 화면줄로(줄) {
+  const 숫자나빈칸 = (값) => (값 === null || 값 === undefined ? "" : Number(값));
+
+  return {
+    일자:       줄.entry_date ?? "",
+    계정과목:   줄.account ?? "",
+    거래내용:   줄.description ?? "",
+    거래처:     줄.partner ?? "",
+    수입금액:   숫자나빈칸(줄.income_amount),
+    수입부가세: 숫자나빈칸(줄.income_vat),
+    비용금액:   숫자나빈칸(줄.expense_amount),
+    비용부가세: 숫자나빈칸(줄.expense_vat),
+    자산금액:   숫자나빈칸(줄.asset_amount),
+    자산부가세: 숫자나빈칸(줄.asset_vat),
+    비고:       줄.note ?? "",
+  };
+}
+
+// 고른 사업장에 저장해둔 장부를 오래된 날짜부터 꺼내 온다
+async function 저장한장부불러오기(사업장) {
+  const { data, error } = await supabase
+    .from("ledger_entries")
+    .select("*")
+    .eq("business_id", 사업장.id)
+    .order("entry_date", { ascending: true });
+
+  if (error) {
+    say(한글로(error), true);
+    return;
+  }
+  장부 = (data ?? []).map(화면줄로);
+}
+
+// 장부보기 — 방금 읽은 장부가 있으면 그것을, 없으면 저장해둔 것을 보여준다
+viewLedgerBtn.addEventListener("click", async () => {
+  const 사업장 = 사업장들.find((하나) => 하나.id === 고른사업장);
+  if (!사업장) return;
+
+  if (장부.length === 0) {
+    viewLedgerBtn.disabled = true;
+    await 저장한장부불러오기(사업장);
+    viewLedgerBtn.disabled = false;
+  }
+
+  if (장부.length === 0) {
+    say("저장된 장부가 없습니다. 파일을 먼저 올려주세요.", true);
+    return;
+  }
+
+  장부그리기();
+  장부화면으로();
+});
 
 saveLedgerBtn.addEventListener("click", async () => {
   const 사업장 = 사업장들.find((하나) => 하나.id === 고른사업장);

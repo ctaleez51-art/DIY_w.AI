@@ -233,18 +233,29 @@ button {
   overflow-wrap: anywhere;
 }
 
-/* 간편장부 표 — 열이 많아 가로로 길다. 칸 안에서 옆으로 밀어 본다 */
-/* 표는 열이 11개라 본문 폭(30rem)에 안 들어간다.
-   이 칸만 창 전체 폭으로 넓히고, 그래도 넘치면 옆으로 밀어 본다 */
-/* 표는 열이 11개라 본문 폭(30rem)에 안 들어간다.
-   이 칸만 창 전체 폭으로 넓히고, 그래도 넘치면 옆으로 밀어 본다.
-   100vw 는 세로 스크롤바 자리까지 포함해서 페이지가 옆으로 밀린다.
-   그래서 script.js 에서 잰 실제 창 폭(--창폭)을 쓴다 */
+/* 간편장부 표 — 열이 11개라 본문 폭(30rem)에 안 들어간다.
+   전에는 이 칸에 음수 마진을 줘서 창 전체 폭으로 넓혔는데,
+   그 50% 가 본문 기준이라 표가 본문 밖으로 삐져나왔고
+   그만큼 문서 폭이 늘어나 본문이 오른쪽으로 밀렸다.
+   그래서 표를 밀어내는 대신, 장부 화면일 때만 본문 폭 제한을 푼다.
+   (body.장부중 은 script.js 의 장부화면으로() 가 붙인다) */
+body.장부중 main {
+  max-width: none;
+}
+
+/* 뒤로 · 삭제 · 저장 — 제목 바로 밑, 왼쪽에 나란히.
+   main 이 가운데 맞춤이라 flex-start 로 왼쪽에 붙인다.
+   gap 2rem 은 잘못 누르지 않게 넉넉히 벌린 것이다 */
+.장부버튼 {
+  display: flex;
+  justify-content: flex-start;
+  gap: 2rem;
+  margin: 0 0 1rem;
+}
+
 #ledgerTable {
-  --폭: var(--창폭, 100vw);
-  width: var(--폭);
-  margin: 1rem 0 0 calc(50% - var(--폭) / 2);
-  padding: 0 1rem;
+  width: 100%;
+  margin-top: 1rem;
   overflow-x: auto;
 }
 
@@ -281,17 +292,43 @@ button {
   text-align: center;
 }
 
-#removeBtn {
-  margin-top: .8rem;
+/* 삭제 전에 한 번 묻는 창.
+   표가 길어서 페이지 안에 두면 화면 밖으로 밀린다.
+   그래서 화면에 고정해서 가운데에 띄우고 뒤를 어둡게 덮는다.
+   [hidden] 과 우선순위가 같아 감추기가 먹지 않으므로 따로 적어준다 */
+.확인창[hidden] {
+  display: none;
 }
 
-/* 삭제 전에 한 번 묻는 줄 */
-.확인줄 {
+.확인창 {
+  position: fixed;
+  inset: 0;
   display: flex;
   align-items: center;
-  gap: .5rem;
-  margin-top: .8rem;
-  font-size: .9rem;
+  justify-content: center;
+  background: rgba(0, 0, 0, .4);
+  z-index: 10;
+}
+
+.확인창속 {
+  background: #fff;
+  border-radius: .5rem;
+  padding: 1.8rem 2rem 1.4rem;
+  min-width: 16rem;
+  text-align: center;
+  box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .25);
+}
+
+.확인글 {
+  margin: 0 0 1.4rem;
+  font-size: 1rem;
+}
+
+/* 확인과 취소도 잘못 누르지 않게 벌려 둔다 */
+.확인버튼 {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
 }
 
 #confirmNo {

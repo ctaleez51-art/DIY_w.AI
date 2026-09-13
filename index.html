@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>간편장부</title>
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=21">
 </head>
 <body>
 <main>
@@ -96,7 +96,11 @@
         <button id="addIndustry" type="button">줄 추가</button>
       </fieldset>
 
-      <label>공동사업자 <input id="coOwners" type="text" required></label>
+      <fieldset>
+        <legend>공동사업자</legend>
+        <label class="한줄"><input type="radio" name="coOwners" value="예" required> 예</label>
+        <label class="한줄"><input type="radio" name="coOwners" value="아니오"> 아니오</label>
+      </fieldset>
       <fieldset>
         <legend>사업자 단위 과세 적용사업자</legend>
         <label class="한줄"><input type="radio" name="unitTax" value="예" required> 예</label>
@@ -121,7 +125,7 @@
       <div class="올리기">
         <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" multiple hidden>
         <button id="uploadBtn" type="button">파일 업로드</button>
-        <span id="fileName"></span>
+        <button id="viewLedgerBtn" type="button">장부보기</button>
       </div>
 
     </div>
@@ -130,18 +134,27 @@
    <!-- 파일을 올리면 이 화면만 남는다 -->
    <div id="ledgerScreen" hidden>
      <h2 id="ledgerScreenTitle"></h2>
-     <button id="backBtn" type="button">뒤로</button>
+
+     <!-- 뒤로 · 삭제 · 저장 — 왼쪽 위에 이 순서로. 잘못 누르지 않게 간격을 넓게 둔다 -->
+     <div class="장부버튼">
+       <button id="backBtn" type="button">뒤로</button>
+       <button id="deleteBtn" type="button">삭제</button>
+       <button id="saveLedgerBtn" type="button">저장</button>
+     </div>
 
      <!-- 읽은 내용을 간편장부 서식으로 옮겨 그린다 -->
      <div id="ledgerTable"></div>
-     <button id="removeBtn" type="button" hidden>선택</button>
-     <button id="saveLedgerBtn" type="button" hidden>저장</button>
 
-     <!-- 선택을 누르면 바로 빼지 않고 한 번 묻는다 -->
-     <div id="confirmRemove" class="확인줄" hidden>
-       <span>삭제할까요?</span>
-       <button id="confirmYes" type="button">확인</button>
-       <button id="confirmNo" type="button">취소</button>
+     <!-- 삭제를 누르면 바로 빼지 않고 한 번 묻는다.
+          표가 길어서 아래에 두면 안 보인다. 화면 가운데에 띄운다 -->
+     <div id="confirmRemove" class="확인창" hidden>
+       <div class="확인창속">
+         <p class="확인글">삭제할까요?</p>
+         <div class="확인버튼">
+           <button id="confirmYes" type="button">확인</button>
+           <button id="confirmNo" type="button">취소</button>
+         </div>
+       </div>
      </div>
    </div>
   </section>
@@ -149,6 +162,6 @@
   <p id="msg"></p>
 </main>
 
-<script type="module" src="script.js?v=9"></script>
+<script type="module" src="script.js?v=21"></script>
 </body>
 </html>
