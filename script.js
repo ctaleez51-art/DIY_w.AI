@@ -64,6 +64,18 @@ function say(text, 계속두기 = false) {
   }
 }
 
+// 갓 로그인한 순간에는 증표(토큰)의 발급 시각이 서버 기준으로 아주 살짝 미래여서
+// 첫 요청이 "JWT issued at future" 로 한 번 튕길 때가 있다.
+// 실패하면 잠깐 쉬었다 한 번 더 해본다. 그래도 안 되면 그때 문구를 보여준다.
+async function 한번더(일) {
+  let 답 = await 일();
+  if (답.error) {
+    await new Promise((멈춤) => setTimeout(멈춤, 700));
+    답 = await 일();
+  }
+  return 답;
+}
+
 // 로그인
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -133,6 +145,14 @@ profileForm.addEventListener("submit", async (e) => {
     return;
   }
 
+  // 전화는 둘 중 하나만 있으면 된다.
+  // required 는 칸 하나씩만 볼 줄 알아서 "둘 중 하나"를 말할 수 없다. 그래서 여기서 직접 본다.
+  if (!개인칸.phone_home.value.trim() && !개인칸.phone_mobile.value.trim()) {
+    say("일반전화와 휴대전화 중 하나는 입력해야 합니다.", true);
+    개인칸.phone_mobile.focus();
+    return;
+  }
+
   const 값 = { user_id: session.user.id };
   for (const [이름, 칸] of Object.entries(개인칸)) {
     값[이름] = 칸.value.trim() || null;
@@ -148,7 +168,9 @@ profileForm.addEventListener("submit", async (e) => {
 
 // 저장해둔 것이 있으면 칸에 채운다
 async function 개인정보불러오기() {
-  const { data, error } = await supabase.from("profiles").select("*").maybeSingle();
+  const { data, error } = await 한번더(() =>
+    supabase.from("profiles").select("*").maybeSingle()
+  );
   if (error) {
     say(error.message, true);
     return;
@@ -309,10 +331,9 @@ async function 삭제하기(사업장) {
 
 // 목록을 불러와 그린다
 async function 사업장목록() {
-  const { data, error } = await supabase
-    .from("businesses")
-    .select("*")
-    .order("created_at");
+  const { data, error } = await 한번더(() =>
+    supabase.from("businesses").select("*").order("created_at")
+  );
 
   if (error) {
     say(error.message, true);

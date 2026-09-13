@@ -28,13 +28,13 @@
     <!-- 개인정보 -->
     <h2>개인정보</h2>
     <form id="profileForm" class="칸모음">
-      <label>성명 <input id="pName" type="text"></label>
-      <label>주민등록번호 <input id="pRrn" type="text"></label>
-      <label>주소 <input id="pAddress" type="text"></label>
+      <label>성명 <input id="pName" type="text" required></label>
+      <label>주민등록번호 <input id="pRrn" type="text" required></label>
+      <label>주소 <input id="pAddress" type="text" required></label>
       <label>일반전화 <input id="pPhoneHome" type="tel"></label>
       <label>휴대전화 <input id="pPhoneMobile" type="tel"></label>
       <label>기장의무
-        <select id="pBookDuty">
+        <select id="pBookDuty" required>
           <option value=""></option>
           <option>복식부기의무자</option>
           <option>간편장부대상자</option>
@@ -42,7 +42,7 @@
         </select>
       </label>
       <label>신고유형
-        <select id="pReportType">
+        <select id="pReportType" required>
           <option value=""></option>
           <option>자기조정</option>
           <option>외부조정</option>
@@ -56,7 +56,7 @@
         </select>
       </label>
       <label>신고구분
-        <select id="pReportKind">
+        <select id="pReportKind" required>
           <option value=""></option>
           <option>정기신고</option>
           <option>수정신고</option>
