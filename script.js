@@ -486,9 +486,9 @@ function 장부칸그리기() {
 // 우리 버튼을 누르면 감춰둔 파일 칸을 대신 연다
 uploadBtn.addEventListener("click", () => fileInput.click());
 
-// 고른 파일의 이름을 버튼 옆에 보여준다
+// 고른 파일의 이름을 버튼 옆에 보여준다. 여러 개면 줄줄이 적는다.
 fileInput.addEventListener("change", () => {
-  fileName.textContent = fileInput.files[0]?.name ?? "";
+  fileName.textContent = [...fileInput.files].map((파일) => 파일.name).join(", ");
 });
 
 function 고른파일비우기() {
