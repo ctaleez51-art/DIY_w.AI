@@ -238,6 +238,9 @@ const saveBiz      = document.getElementById("saveBiz");
 const cancelEdit   = document.getElementById("cancelEdit");
 const ledger       = document.getElementById("ledger");
 const ledgerTitle  = document.getElementById("ledgerTitle");
+const fileInput    = document.getElementById("fileInput");
+const uploadBtn    = document.getElementById("uploadBtn");
+const fileName     = document.getElementById("fileName");
 
 // 지금 고른 사업장. 다음 단계(장부 저장)에서 쓴다.
 let 고른사업장 = localStorage.getItem("고른사업장") ?? "";
@@ -477,6 +480,20 @@ function 장부칸그리기() {
   const 사업장 = 사업장들.find((하나) => 하나.id === 고른사업장);
   ledger.hidden = !사업장;
   ledgerTitle.textContent = 사업장 ? `간편장부 — ${사업장.name} (${사업장.biz_no})` : "";
+  if (!사업장) 고른파일비우기();
+}
+
+// 우리 버튼을 누르면 감춰둔 파일 칸을 대신 연다
+uploadBtn.addEventListener("click", () => fileInput.click());
+
+// 고른 파일의 이름을 버튼 옆에 보여준다
+fileInput.addEventListener("change", () => {
+  fileName.textContent = fileInput.files[0]?.name ?? "";
+});
+
+function 고른파일비우기() {
+  fileInput.value = "";
+  fileName.textContent = "";
 }
 
 

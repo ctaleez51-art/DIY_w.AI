@@ -213,3 +213,22 @@ button {
 #msg:empty {
   display: none;
 }
+
+/* 파일 올리는 줄 — 버튼과 고른 파일 이름을 나란히 둔다 */
+.올리기 {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  text-align: left;
+  margin-top: .5rem;
+}
+
+#uploadBtn {
+  flex: none;
+}
+
+#fileName {
+  font-size: .9rem;
+  color: #666;
+  overflow-wrap: anywhere;
+}

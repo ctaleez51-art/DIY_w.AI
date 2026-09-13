@@ -114,6 +114,14 @@
     <!-- 간편장부 — 고른 사업장에 대한 파일을 받는 자리 -->
     <div id="ledger" hidden>
       <h2 id="ledgerTitle"></h2>
+
+      <!-- 브라우저가 그려주는 파일 칸은 글자를 바꿀 수 없어서 감추고,
+           우리 버튼을 눌러 그 칸을 대신 연다 -->
+      <div class="올리기">
+        <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" hidden>
+        <button id="uploadBtn" type="button">파일 업로드</button>
+        <span id="fileName"></span>
+      </div>
     </div>
   </section>
 
