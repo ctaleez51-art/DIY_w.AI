@@ -628,6 +628,14 @@ function 칸만들기(이름, 글, 속성 = {}) {
   return 칸;
 }
 
+// 세로 스크롤바를 뺀 실제 창 폭. styles.css 의 --창폭 이 이 값을 쓴다.
+function 창폭재기() {
+  const 폭 = document.documentElement.clientWidth;
+  document.documentElement.style.setProperty("--창폭", `${폭}px`);
+}
+창폭재기();
+window.addEventListener("resize", 창폭재기);
+
 function 장부그리기() {
   ledgerTable.replaceChildren();
   if (장부.length === 0) return;
@@ -671,6 +679,9 @@ function 장부그리기() {
 
   표.append(머리, 몸);
   ledgerTable.appendChild(표);
+
+  // 표가 붙으면 페이지가 길어져 세로 스크롤바가 생긴다. 그만큼 창 폭이 줄어드니 다시 잰다.
+  창폭재기();
 }
 
 
