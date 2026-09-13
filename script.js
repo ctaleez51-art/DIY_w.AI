@@ -9,7 +9,10 @@ import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
 const SUPABASE_URL = "https://kqawkddxcsdjsmnjsjix.supabase.co";
 const SUPABASE_KEY = "sb_publishable_eg6TGqmzNEbKu1ywiZGl8w_dbIcgkW1";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  // 창을 닫으면 로그인이 풀린다. 다시 들어오면 로그인 화면부터 뜬다.
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 
 // 화면 조각들
 const loggedOut = document.getElementById("loggedOut");
