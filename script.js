@@ -251,6 +251,7 @@ const removeBtn    = document.getElementById("removeBtn");
 const confirmRemove = document.getElementById("confirmRemove");
 const confirmYes   = document.getElementById("confirmYes");
 const confirmNo    = document.getElementById("confirmNo");
+const saveLedgerBtn = document.getElementById("saveLedgerBtn");
 
 // 지금 고른 사업장. 다음 단계(장부 저장)에서 쓴다.
 let 고른사업장 = localStorage.getItem("고른사업장") ?? "";
@@ -742,6 +743,7 @@ function 장부그리기() {
   ledgerTable.replaceChildren();
   confirmRemove.hidden = true;
   removeBtn.hidden = 장부.length === 0;
+  saveLedgerBtn.hidden = 장부.length === 0;
   if (장부.length === 0) return;
 
   const 표 = document.createElement("table");
@@ -814,11 +816,13 @@ function 체크한번호() {
 function 묻기끝내기() {
   confirmRemove.hidden = true;
   removeBtn.hidden = 장부.length === 0;
+  saveLedgerBtn.hidden = 장부.length === 0;
 }
 
 removeBtn.addEventListener("click", () => {
   if (체크한번호().size === 0) return;
   removeBtn.hidden = true;
+  saveLedgerBtn.hidden = true;
   confirmRemove.hidden = false;
 });
 
@@ -840,3 +844,55 @@ confirmNo.addEventListener("click", 묻기끝내기);
 const { data: 첫세션 } = await supabase.auth.getSession();
 draw(첫세션.session);
 supabase.auth.onAuthStateChange((_event, session) => draw(session));
+
+
+// ============================================================
+// 장부 저장 — 고른 사업장에 붙여 담는다
+// 다시 저장하면 뒤에 덧붙인다. 예전 것을 지우지 않는다.
+// (같은 거래가 두 번 들어가는 것을 막는 일은 다음 버전이다 — PRD 7번 7항)
+// ============================================================
+
+// 화면에 쓰는 이름을 DB 칸 이름으로 바꾼다
+function 저장할줄(한줄, 사업장) {
+  const 숫자나널 = (값) => (값 === "" ? null : 값);
+
+  return {
+    business_id:    사업장.id,
+    entry_date:     한줄.일자,
+    account:        한줄.계정과목 || null,
+    description:    한줄.거래내용 || null,
+    partner:        한줄.거래처 || null,
+    income_amount:  숫자나널(한줄.수입금액),
+    income_vat:     숫자나널(한줄.수입부가세),
+    expense_amount: 숫자나널(한줄.비용금액),
+    expense_vat:    숫자나널(한줄.비용부가세),
+    asset_amount:   숫자나널(한줄.자산금액),
+    asset_vat:      숫자나널(한줄.자산부가세),
+    note:           한줄.비고 || null,
+  };
+}
+
+saveLedgerBtn.addEventListener("click", async () => {
+  const 사업장 = 사업장들.find((하나) => 하나.id === 고른사업장);
+  if (!사업장 || 장부.length === 0) return;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    say("로그인이 풀렸습니다. 다시 로그인해주세요.", true);
+    return;
+  }
+
+  saveLedgerBtn.disabled = true;
+
+  const { error } = await supabase
+    .from("ledger_entries")
+    .insert(장부.map((한줄) => 저장할줄(한줄, 사업장)));
+
+  saveLedgerBtn.disabled = false;
+
+  if (error) {
+    say(한글로(error), true);
+    return;
+  }
+  say(`${장부.length}건을 저장했습니다.`);
+});
