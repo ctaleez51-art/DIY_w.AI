@@ -98,11 +98,12 @@ function 한글로(error) {
 // 안내 문구 한 줄.
 // 잘 된 경우는 몇 초 뒤 저절로 사라지고, 오류는 계속 두기를 켜서 남긴다.
 let 문구타이머;
-function say(text, 계속두기 = false) {
+// 안내 문구. 무엇이든 잠깐 보였다가 저절로 사라진다.
+function say(text) {
   clearTimeout(문구타이머);
   msg.textContent = text;
-  if (text && !계속두기) {
-    문구타이머 = setTimeout(() => { msg.textContent = ""; }, 1500);
+  if (text) {
+    문구타이머 = setTimeout(() => { msg.textContent = ""; }, 1200);
   }
 }
 
@@ -126,14 +127,14 @@ form.addEventListener("submit", async (e) => {
     email: emailBox.value,
     password: pwBox.value,
   });
-  if (error) say(한글로(error), true);
+  if (error) say(한글로(error));
 });
 
 // 회원가입
 signupBtn.addEventListener("click", async () => {
   say("");
   if (!emailBox.value || !pwBox.value) {
-    say("이메일 주소를 입력해야 합니다.", true);
+    say("이메일 주소를 입력해야 합니다.");
     return;
   }
   const { error } = await supabase.auth.signUp({
@@ -142,7 +143,7 @@ signupBtn.addEventListener("click", async () => {
     options: { emailRedirectTo: window.location.href },
   });
   if (error) {
-    say(한글로(error), true);
+    say(한글로(error));
   } else {
     say("확인 메일을 보냈습니다. 메일의 링크를 눌러야 가입이 끝납니다.");
   }
@@ -183,14 +184,14 @@ profileForm.addEventListener("submit", async (e) => {
   // 저장해둔 세션에서 바로 꺼낸다 (getUser 는 서버에 다시 물어보느라 null 이 나올 때가 있다)
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    say("로그인이 풀렸습니다. 다시 로그인해주세요.", true);
+    say("로그인이 풀렸습니다. 다시 로그인해주세요.");
     return;
   }
 
   // 전화는 둘 중 하나만 있으면 된다.
   // required 는 칸 하나씩만 볼 줄 알아서 "둘 중 하나"를 말할 수 없다. 그래서 여기서 직접 본다.
   if (!개인칸.phone_home.value.trim() && !개인칸.phone_mobile.value.trim()) {
-    say("일반전화와 휴대전화 중 하나는 입력해야 합니다.", true);
+    say("일반전화와 휴대전화 중 하나는 입력해야 합니다.");
     개인칸.phone_mobile.focus();
     return;
   }
@@ -202,7 +203,7 @@ profileForm.addEventListener("submit", async (e) => {
 
   const { error } = await supabase.from("profiles").upsert(값, { onConflict: "user_id" });
   if (error) {
-    say(한글로(error), true);
+    say(한글로(error));
     return;
   }
   say("개인정보를 저장했습니다.");
@@ -214,7 +215,7 @@ async function 개인정보불러오기() {
     supabase.from("profiles").select("*").maybeSingle()
   );
   if (error) {
-    say(error.message, true);
+    say(error.message);
     return;
   }
   for (const [이름, 칸] of Object.entries(개인칸)) {
@@ -362,7 +363,7 @@ bizForm.addEventListener("submit", async (e) => {
     : await supabase.from("businesses").insert(값);
 
   if (error) {
-    say(한글로(error), true);
+    say(한글로(error));
     return;
   }
 
@@ -412,7 +413,7 @@ function 수정하기(사업장) {
 async function 삭제하기(사업장) {
   const { error } = await supabase.from("businesses").delete().eq("id", 사업장.id);
   if (error) {
-    say(error.message, true);
+    say(error.message);
     return;
   }
 
@@ -427,7 +428,7 @@ async function 사업장목록() {
   );
 
   if (error) {
-    say(error.message, true);
+    say(error.message);
     return;
   }
 
@@ -520,7 +521,7 @@ fileInput.addEventListener("change", async () => {
     try {
       장부.push(...(await 파일읽기(파일, 사업장)));
     } catch (탈) {
-      say(`${파일.name} 을(를) 읽지 못했습니다. (${탈.message})`, true);
+      say(`${파일.name} 을(를) 읽지 못했습니다. (${탈.message})`);
     }
   }
 
@@ -761,9 +762,21 @@ function 장부그리기() {
   // 머리글 두 줄 — 법정 서식과 같은 모양
   const 머리 = document.createElement("thead");
 
+  // 머리글 첫 칸 — 글자 대신 전체 선택 체크박스를 넣는다
+  const 고름머리 = 칸만들기("th", "", { rowspan: 2 });
+  const 전체선택 = document.createElement("input");
+  전체선택.type = "checkbox";
+  전체선택.title = "전체 선택";
+  전체선택.addEventListener("change", () => {
+    for (const 체크 of ledgerTable.querySelectorAll("tbody input[type=checkbox]")) {
+      체크.checked = 전체선택.checked;
+    }
+  });
+  고름머리.appendChild(전체선택);
+
   const 윗줄 = document.createElement("tr");
   윗줄.append(
-    칸만들기("th", "선택", { rowspan: 2 }),
+    고름머리,
     칸만들기("th", "①일자", { rowspan: 2 }),
     칸만들기("th", "②계정과목", { rowspan: 2 }),
     칸만들기("th", "③거래내용", { rowspan: 2 }),
@@ -793,6 +806,10 @@ function 장부그리기() {
     const 체크 = document.createElement("input");
     체크.type = "checkbox";
     체크.dataset.번호 = 번호;
+    체크.addEventListener("change", () => {
+      const 전부 = [...ledgerTable.querySelectorAll("tbody input[type=checkbox]")];
+      전체선택.checked = 전부.every((하나) => 하나.checked);
+    });
     고름칸.appendChild(체크);
     줄.appendChild(고름칸);
 
@@ -813,7 +830,7 @@ function 장부그리기() {
 // 한 번 빼면 되돌릴 수 없다.
 function 체크한번호() {
   return new Set(
-    [...ledgerTable.querySelectorAll("input[type=checkbox]:checked")]
+    [...ledgerTable.querySelectorAll("tbody input[type=checkbox]:checked")]
       .map((체크) => Number(체크.dataset.번호))
   );
 }
@@ -903,25 +920,25 @@ async function 저장한장부불러오기(사업장) {
     .order("entry_date", { ascending: true });
 
   if (error) {
-    say(한글로(error), true);
+    say(한글로(error));
     return;
   }
   장부 = (data ?? []).map(화면줄로);
 }
 
-// 장부보기 — 방금 읽은 장부가 있으면 그것을, 없으면 저장해둔 것을 보여준다
+// 장부보기 — 저장된 것만 보여준다.
+// 올리기만 하고 저장하지 않은 것은 여기서 보이지 않는다.
+// 보인다는 것은 저장되었다는 뜻이어야 한다.
 viewLedgerBtn.addEventListener("click", async () => {
   const 사업장 = 사업장들.find((하나) => 하나.id === 고른사업장);
   if (!사업장) return;
 
-  if (장부.length === 0) {
-    viewLedgerBtn.disabled = true;
-    await 저장한장부불러오기(사업장);
-    viewLedgerBtn.disabled = false;
-  }
+  viewLedgerBtn.disabled = true;
+  await 저장한장부불러오기(사업장);
+  viewLedgerBtn.disabled = false;
 
   if (장부.length === 0) {
-    say("저장된 장부가 없습니다. 파일을 먼저 올려주세요.", true);
+    say("저장된 장부가 없습니다.");
     return;
   }
 
@@ -929,27 +946,48 @@ viewLedgerBtn.addEventListener("click", async () => {
   장부화면으로();
 });
 
+// 저장 — 그 사업장의 장부를 지금 화면에 보이는 것과 똑같이 맞춘다.
+// 예전 줄을 먼저 걷어내고 화면에 있는 것을 넣는다.
+// 그래서 화면에서 뺀 줄은 DB 에서도 빠지고, 같은 줄이 두 번 쌓이지 않는다.
+// (장부가 비어 있으면 DB 도 비운다)
 saveLedgerBtn.addEventListener("click", async () => {
   const 사업장 = 사업장들.find((하나) => 하나.id === 고른사업장);
-  if (!사업장 || 장부.length === 0) return;
+  if (!사업장) return;
 
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    say("로그인이 풀렸습니다. 다시 로그인해주세요.", true);
+    say("로그인이 풀렸습니다. 다시 로그인해주세요.");
     return;
   }
 
   saveLedgerBtn.disabled = true;
 
-  const { error } = await supabase
+  // 넣을 것을 먼저 만들어 둔다. 이 일이 실패하면 지우지 않는다.
+  const 넣을것 = 장부.map((한줄) => 저장할줄(한줄, 사업장));
+
+  const { error: 지움탈 } = await supabase
     .from("ledger_entries")
-    .insert(장부.map((한줄) => 저장할줄(한줄, 사업장)));
+    .delete()
+    .eq("business_id", 사업장.id);
 
-  saveLedgerBtn.disabled = false;
-
-  if (error) {
-    say(한글로(error), true);
+  if (지움탈) {
+    saveLedgerBtn.disabled = false;
+    say(한글로(지움탈));
     return;
   }
-  say(`${장부.length}건을 저장했습니다.`);
+
+  if (넣을것.length > 0) {
+    const { error } = await supabase.from("ledger_entries").insert(넣을것);
+
+    if (error) {
+      saveLedgerBtn.disabled = false;
+      say(한글로(error));
+      return;
+    }
+  }
+
+  saveLedgerBtn.disabled = false;
+  say(넣을것.length === 0
+    ? "저장한 장부를 비웠습니다."
+    : `${넣을것.length}건을 저장했습니다.`);
 });

@@ -194,15 +194,16 @@ button {
   max-width: 100%;
 }
 
-/* 안내 문구는 페이지가 길어져도 늘 보이도록 화면 아래에 띄운다 */
+/* 안내 문구는 페이지가 길어져도 늘 보이도록 화면에 띄운다.
+   가운데 아래에 두었더니 버튼을 가려서 오른쪽 아래 구석으로 옮겼다.
+   본문은 가운데에 있으므로 이 자리는 대체로 비어 있다 */
 #msg {
   position: fixed;
-  left: 50%;
+  right: 1rem;
   bottom: 1rem;
-  transform: translateX(-50%);
   margin: 0;
   padding: .5rem .9rem;
-  max-width: 90vw;
+  max-width: 22rem;
   border-radius: 6px;
   background: #333;
   color: #fff;
