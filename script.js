@@ -248,6 +248,9 @@ const ledgerScreen = document.getElementById("ledgerScreen");
 const ledgerScreenTitle = document.getElementById("ledgerScreenTitle");
 const backBtn      = document.getElementById("backBtn");
 const removeBtn    = document.getElementById("removeBtn");
+const confirmRemove = document.getElementById("confirmRemove");
+const confirmYes   = document.getElementById("confirmYes");
+const confirmNo    = document.getElementById("confirmNo");
 
 // 지금 고른 사업장. 다음 단계(장부 저장)에서 쓴다.
 let 고른사업장 = localStorage.getItem("고른사업장") ?? "";
@@ -677,6 +680,7 @@ window.addEventListener("resize", 창폭재기);
 
 function 장부그리기() {
   ledgerTable.replaceChildren();
+  confirmRemove.hidden = true;
   removeBtn.hidden = 장부.length === 0;
   if (장부.length === 0) return;
 
@@ -738,18 +742,34 @@ function 장부그리기() {
   창폭재기();
 }
 
-// 체크한 줄을 장부에서 뺀다
-removeBtn.addEventListener("click", () => {
-  const 뺄것 = new Set(
+// 체크한 줄을 장부에서 뺀다. 한 번 물어보고 확인을 받아야 뺀다.
+// 한 번 빼면 되돌릴 수 없다.
+function 체크한번호() {
+  return new Set(
     [...ledgerTable.querySelectorAll("input[type=checkbox]:checked")]
       .map((체크) => Number(체크.dataset.번호))
   );
-  if (뺄것.size === 0) return;
+}
 
+function 묻기끝내기() {
+  confirmRemove.hidden = true;
+  removeBtn.hidden = 장부.length === 0;
+}
+
+removeBtn.addEventListener("click", () => {
+  if (체크한번호().size === 0) return;
+  removeBtn.hidden = true;
+  confirmRemove.hidden = false;
+});
+
+confirmYes.addEventListener("click", () => {
+  const 뺄것 = 체크한번호();
   장부 = 장부.filter((_, 번호) => !뺄것.has(번호));
   장부그리기();
   say(`${뺄것.size}건을 뺐습니다.`);
 });
+
+confirmNo.addEventListener("click", 묻기끝내기);
 
 
 // ============================================================

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>간편장부</title>
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 <main>
@@ -135,12 +135,19 @@
      <!-- 읽은 내용을 간편장부 서식으로 옮겨 그린다 -->
      <div id="ledgerTable"></div>
      <button id="removeBtn" type="button" hidden>선택</button>
+
+     <!-- 선택을 누르면 바로 빼지 않고 한 번 묻는다 -->
+     <div id="confirmRemove" class="확인줄" hidden>
+       <span>삭제할까요?</span>
+       <button id="confirmYes" type="button">확인</button>
+       <button id="confirmNo" type="button">취소</button>
+     </div>
    </div>
   </section>
 
   <p id="msg"></p>
 </main>
 
-<script type="module" src="script.js?v=5"></script>
+<script type="module" src="script.js?v=6"></script>
 </body>
 </html>

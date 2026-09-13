@@ -284,3 +284,17 @@ button {
 #removeBtn {
   margin-top: .8rem;
 }
+
+/* 삭제 전에 한 번 묻는 줄 */
+.확인줄 {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .8rem;
+  font-size: .9rem;
+}
+
+#confirmNo {
+  background: #fff;
+  color: #333;
+}
