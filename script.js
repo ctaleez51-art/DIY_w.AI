@@ -505,7 +505,7 @@ function 고르기(id) {
 function 장부칸그리기() {
   const 사업장 = 사업장들.find((하나) => 하나.id === 고른사업장);
   ledger.hidden = !사업장;
-  ledgerTitle.textContent = 사업장 ? `간편장부 — ${사업장.name} (${사업장.biz_no})` : "";
+  ledgerTitle.textContent = 사업장 ? `${기준연도}년 귀속 간편장부 — ${사업장.name} (${사업장.biz_no})` : "";
   if (!사업장) 고른파일비우기();
 }
 
