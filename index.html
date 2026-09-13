@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>간편장부</title>
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 <main>
@@ -22,6 +22,7 @@
 
   <!-- 로그인 후에 보이는 것 -->
   <section id="loggedIn" hidden>
+   <div id="setup">
     <p id="who"></p>
     <button id="logoutBtn" type="button">로그아웃</button>
 
@@ -123,14 +124,22 @@
         <span id="fileName"></span>
       </div>
 
-      <!-- 읽은 내용을 간편장부 서식으로 옮겨 그린다 -->
-      <div id="ledgerTable"></div>
     </div>
+   </div>
+
+   <!-- 파일을 올리면 이 화면만 남는다 -->
+   <div id="ledgerScreen" hidden>
+     <h2 id="ledgerScreenTitle"></h2>
+     <button id="backBtn" type="button">뒤로</button>
+
+     <!-- 읽은 내용을 간편장부 서식으로 옮겨 그린다 -->
+     <div id="ledgerTable"></div>
+   </div>
   </section>
 
   <p id="msg"></p>
 </main>
 
-<script type="module" src="script.js?v=2"></script>
+<script type="module" src="script.js?v=3"></script>
 </body>
 </html>

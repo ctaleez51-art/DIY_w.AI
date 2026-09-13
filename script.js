@@ -243,6 +243,10 @@ const fileInput    = document.getElementById("fileInput");
 const uploadBtn    = document.getElementById("uploadBtn");
 const fileName     = document.getElementById("fileName");
 const ledgerTable  = document.getElementById("ledgerTable");
+const setup        = document.getElementById("setup");
+const ledgerScreen = document.getElementById("ledgerScreen");
+const ledgerScreenTitle = document.getElementById("ledgerScreenTitle");
+const backBtn      = document.getElementById("backBtn");
 
 // 지금 고른 사업장. 다음 단계(장부 저장)에서 쓴다.
 let 고른사업장 = localStorage.getItem("고른사업장") ?? "";
@@ -505,13 +509,32 @@ fileInput.addEventListener("change", async () => {
   }
 
   장부그리기();
+  if (장부.length > 0) 장부화면으로();
 });
+
+// 화면 두 개를 오간다. 파일을 올리면 장부만 남고, 뒤로 누르면 등록 화면으로 돌아온다.
+function 장부화면으로() {
+  ledgerScreenTitle.textContent = ledgerTitle.textContent;
+  setup.hidden = true;
+  ledgerScreen.hidden = false;
+  window.scrollTo(0, 0);
+  창폭재기();
+}
+
+function 등록화면으로() {
+  ledgerScreen.hidden = true;
+  setup.hidden = false;
+  window.scrollTo(0, 0);
+}
+
+backBtn.addEventListener("click", 등록화면으로);
 
 function 고른파일비우기() {
   fileInput.value = "";
   fileName.textContent = "";
   장부 = [];
   ledgerTable.replaceChildren();
+  등록화면으로();
 }
 
 
