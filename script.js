@@ -4,6 +4,7 @@
 // 아래 두 값은 브라우저에 그대로 드러나는 공개용 값이다. 숨길 필요가 없다.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
 
 const SUPABASE_URL = "https://kqawkddxcsdjsmnjsjix.supabase.co";
 const SUPABASE_KEY = "sb_publishable_eg6TGqmzNEbKu1ywiZGl8w_dbIcgkW1";
@@ -241,6 +242,7 @@ const ledgerTitle  = document.getElementById("ledgerTitle");
 const fileInput    = document.getElementById("fileInput");
 const uploadBtn    = document.getElementById("uploadBtn");
 const fileName     = document.getElementById("fileName");
+const ledgerTable  = document.getElementById("ledgerTable");
 
 // 지금 고른 사업장. 다음 단계(장부 저장)에서 쓴다.
 let 고른사업장 = localStorage.getItem("고른사업장") ?? "";
@@ -487,13 +489,188 @@ function 장부칸그리기() {
 uploadBtn.addEventListener("click", () => fileInput.click());
 
 // 고른 파일의 이름을 버튼 옆에 보여준다. 여러 개면 줄줄이 적는다.
-fileInput.addEventListener("change", () => {
+fileInput.addEventListener("change", async () => {
   fileName.textContent = [...fileInput.files].map((파일) => 파일.name).join(", ");
+  if (fileInput.files.length === 0) return;
+
+  const 사업장 = 사업장들.find((하나) => 하나.id === 고른사업장);
+  장부 = [];
+
+  for (const 파일 of fileInput.files) {
+    try {
+      장부.push(...(await 파일읽기(파일, 사업장)));
+    } catch (탈) {
+      say(`${파일.name} 을(를) 읽지 못했습니다. (${탈.message})`, true);
+    }
+  }
+
+  장부그리기();
 });
 
 function 고른파일비우기() {
   fileInput.value = "";
   fileName.textContent = "";
+  장부 = [];
+  ledgerTable.replaceChildren();
+}
+
+
+// ============================================================
+// 파일을 읽어 간편장부 8개 항목으로 옮긴다
+// 어느 열을 어디에 넣는지는 RULES.md 에 적혀 있다
+// ============================================================
+
+// 옮겨 담은 장부 줄들. 파일을 여러 개 올리면 이어 붙는다.
+let 장부 = [];
+
+const 글자 = (값) => String(값 ?? "").trim();
+const 숫자만 = (값) => 글자(값).replace(/\D/g, "");
+
+// "1,234" 같은 글자도 숫자로 본다. 숫자가 아니면 빈 칸으로 둔다.
+function 숫자로(값) {
+  if (값 === "" || 값 === null || 값 === undefined) return "";
+  const 수 = Number(글자(값).replace(/,/g, ""));
+  return Number.isFinite(수) ? 수 : "";
+}
+
+// 날짜 칸은 엑셀이 날짜로 들고 있을 때도 있고 글자일 때도 있다
+function 날짜로(값) {
+  if (값 instanceof Date) {
+    const 두자리 = (수) => String(수).padStart(2, "0");
+    return `${값.getFullYear()}-${두자리(값.getMonth() + 1)}-${두자리(값.getDate())}`;
+  }
+  return 글자(값);
+}
+
+// 머리글에서 각 열이 몇 번째인지 찾는다.
+// 상호·대표자명·주소는 이름이 두 번 나온다(공급자 쪽, 공급받는자 쪽).
+// 그래서 등록번호 열 뒤에서 찾아 가린다.
+function 열자리(머리) {
+  const 찾기 = (이름, 시작 = 0) => 머리.indexOf(이름, 시작);
+  const 공급자 = 찾기("공급자사업자등록번호");
+  const 공급받는자 = 찾기("공급받는자사업자등록번호");
+
+  return {
+    작성일자:        찾기("작성일자"),
+    공급자등록번호:   공급자,
+    공급받는자등록번호: 공급받는자,
+    공급자상호:      찾기("상호", 공급자),
+    공급받는자상호:   찾기("상호", 공급받는자),
+    공급가액:        찾기("공급가액"),
+    세액:            찾기("세액"),
+    품목명:          찾기("품목명"),
+    비고:            찾기("비고"),
+  };
+}
+
+async function 파일읽기(파일, 사업장) {
+  const 통 = XLSX.read(await 파일.arrayBuffer(), { cellDates: true });
+  const 장 = 통.Sheets[통.SheetNames[0]];
+  const 줄들 = XLSX.utils.sheet_to_json(장, { header: 1, defval: "" });
+
+  // 파일마다 표가 시작하는 줄이 다르다. 머리글을 글자로 찾는다.
+  const 머리번호 = 줄들.findIndex((줄) => 줄.some((칸) => 글자(칸) === "작성일자"));
+  if (머리번호 < 0) throw new Error("작성일자 열을 찾지 못했습니다");
+
+  const 자리 = 열자리(줄들[머리번호].map(글자));
+
+  return 줄들
+    .slice(머리번호 + 1)
+    .filter((줄) => 줄.some((칸) => 글자(칸) !== ""))
+    .map((줄) => 한줄옮기기(줄, 자리, 사업장));
+}
+
+// 파일의 한 줄을 간편장부 한 줄로 옮긴다.
+// 매출인지 매입인지는 파일명이 아니라 등록번호로 가린다 (RULES.md).
+function 한줄옮기기(줄, 자리, 사업장) {
+  const 값 = (번호) => (번호 >= 0 ? 줄[번호] : "");
+  const 내번호 = 숫자만(사업장?.biz_no);
+
+  const 매출 = Boolean(내번호) && 숫자만(값(자리.공급자등록번호)) === 내번호;
+  const 매입 = Boolean(내번호) && 숫자만(값(자리.공급받는자등록번호)) === 내번호;
+
+  const 금액   = 숫자로(값(자리.공급가액));
+  const 부가세 = 숫자로(값(자리.세액));
+
+  return {
+    일자:       날짜로(값(자리.작성일자)),
+    계정과목:   "",
+    거래내용:   글자(값(자리.품목명)),
+    거래처:     글자(매출 ? 값(자리.공급받는자상호) : 값(자리.공급자상호)),
+    수입금액:   매출 ? 금액 : "",
+    수입부가세: 매출 ? 부가세 : "",
+    비용금액:   매입 ? 금액 : "",
+    비용부가세: 매입 ? 부가세 : "",
+    자산금액:   "",
+    자산부가세: "",
+    비고:       글자(값(자리.비고)),
+    내것:       매출 || 매입,
+  };
+}
+
+
+// ============================================================
+// 간편장부 표 그리기 — 서식의 항목 이름을 그대로 쓴다
+// ============================================================
+
+const 본문열 = [
+  "일자", "계정과목", "거래내용", "거래처",
+  "수입금액", "수입부가세",
+  "비용금액", "비용부가세",
+  "자산금액", "자산부가세",
+  "비고",
+];
+
+function 칸만들기(이름, 글, 속성 = {}) {
+  const 칸 = document.createElement(이름);
+  칸.textContent = 글;
+  for (const [키, 값] of Object.entries(속성)) 칸.setAttribute(키, 값);
+  return 칸;
+}
+
+function 장부그리기() {
+  ledgerTable.replaceChildren();
+  if (장부.length === 0) return;
+
+  const 표 = document.createElement("table");
+  표.className = "장부표";
+
+  // 머리글 두 줄 — 법정 서식과 같은 모양
+  const 머리 = document.createElement("thead");
+
+  const 윗줄 = document.createElement("tr");
+  윗줄.append(
+    칸만들기("th", "①일자", { rowspan: 2 }),
+    칸만들기("th", "②계정과목", { rowspan: 2 }),
+    칸만들기("th", "③거래내용", { rowspan: 2 }),
+    칸만들기("th", "④거래처", { rowspan: 2 }),
+    칸만들기("th", "⑤수입(매출)", { colspan: 2 }),
+    칸만들기("th", "⑥비용(원가관련 매입포함)", { colspan: 2 }),
+    칸만들기("th", "⑦사업용 유형자산 및 무형자산 증감(매매)", { colspan: 2 }),
+    칸만들기("th", "⑧비고", { rowspan: 2 }),
+  );
+
+  const 아랫줄 = document.createElement("tr");
+  for (let 번 = 0; 번 < 3; 번 += 1) {
+    아랫줄.append(칸만들기("th", "금액"), 칸만들기("th", "부가세"));
+  }
+
+  머리.append(윗줄, 아랫줄);
+
+  const 몸 = document.createElement("tbody");
+  for (const 한줄 of 장부) {
+    const 줄 = document.createElement("tr");
+    for (const 열 of 본문열) {
+      const 값 = 한줄[열];
+      const 칸 = 칸만들기("td", typeof 값 === "number" ? 값.toLocaleString() : 값);
+      if (typeof 값 === "number") 칸.className = "숫자";
+      줄.appendChild(칸);
+    }
+    몸.appendChild(줄);
+  }
+
+  표.append(머리, 몸);
+  ledgerTable.appendChild(표);
 }
 
 

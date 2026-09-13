@@ -232,3 +232,32 @@ button {
   color: #666;
   overflow-wrap: anywhere;
 }
+
+/* 간편장부 표 — 열이 많아 가로로 길다. 칸 안에서 옆으로 밀어 본다 */
+#ledgerTable {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.장부표 {
+  border-collapse: collapse;
+  font-size: .8rem;
+  white-space: nowrap;
+}
+
+.장부표 th,
+.장부표 td {
+  border: 1px solid #ccc;
+  padding: .3rem .5rem;
+  text-align: left;
+}
+
+.장부표 th {
+  background: #fffbe6;
+  text-align: center;
+  font-weight: normal;
+}
+
+.장부표 td.숫자 {
+  text-align: right;
+}
