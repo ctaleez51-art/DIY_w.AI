@@ -52,8 +52,44 @@ const 오류문구 = {
   "missing email or phone": "이메일 주소를 입력해야 합니다.",
 };
 
+// DB 가 거절할 때 나오는 영어에는 칸 이름이 영문으로 들어 있다. 화면에 쓰는 말로 바꾼다.
+const 칸이름 = {
+  profiles: {
+    name: "성명", rrn: "주민등록번호", address: "주소",
+    phone_home: "일반전화", phone_mobile: "휴대전화",
+    book_duty: "기장의무", report_type: "신고유형", report_kind: "신고구분",
+    tax_office: "관할세무서", local_gov: "관할지자체",
+  },
+  businesses: {
+    tax_type: "과세유형", biz_no: "등록번호", name: "상호", owner_name: "성명",
+    opened_on: "개업 연월일", address: "사업장 소재지",
+    co_owners: "공동사업자", unit_tax: "사업자 단위 과세",
+  },
+};
+
+// 두 칸을 같이 보는 조건(check)에 걸렸을 때
+const 조건이름 = {
+  "전화_둘중_하나": "일반전화와 휴대전화 중 하나는 입력해야 합니다.",
+  "industries_at_least_one": "업태와 종목을 한 줄 이상 입력해야 합니다.",
+};
+
 function 한글로(error) {
-  return 오류문구[error.message] ?? error.message;
+  const 말 = error.message;
+
+  if (오류문구[말]) return 오류문구[말];
+
+  // null value in column "rrn" of relation "profiles" violates not-null constraint
+  const 빈칸 = 말.match(/null value in column "(.+?)" of relation "(.+?)"/);
+  if (빈칸) {
+    const 이름 = 칸이름[빈칸[2]]?.[빈칸[1]];
+    if (이름) return `${이름}을(를) 입력해야 합니다.`;
+  }
+
+  // new row for relation "profiles" violates check constraint "전화_둘중_하나"
+  const 조건 = 말.match(/violates check constraint "(.+?)"/);
+  if (조건 && 조건이름[조건[1]]) return 조건이름[조건[1]];
+
+  return 말;
 }
 
 // 안내 문구 한 줄.
@@ -163,7 +199,7 @@ profileForm.addEventListener("submit", async (e) => {
 
   const { error } = await supabase.from("profiles").upsert(값, { onConflict: "user_id" });
   if (error) {
-    say(error.message, true);
+    say(한글로(error), true);
     return;
   }
   say("개인정보를 저장했습니다.");
@@ -295,7 +331,7 @@ bizForm.addEventListener("submit", async (e) => {
     : await supabase.from("businesses").insert(값);
 
   if (error) {
-    say(error.message, true);
+    say(한글로(error), true);
     return;
   }
 
